@@ -71,10 +71,6 @@ chrono-master-pro/
 │   ├── .env.example
 │   └── package.json
 │
-├── shared/                   # Shared types and utilities
-│   ├── types.ts
-│   └── constants.ts
-│
 └── README.md
 ```
 
