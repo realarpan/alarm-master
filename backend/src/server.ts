@@ -4,68 +4,76 @@ import dotenv from 'dotenv';
 import http from 'http';
 import { Server as SocketServer } from 'socket.io';
 
-// Load environment variables
+// Initialize environment configuration
 dotenv.config();
 
 const app: Express = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
+// Configure API middleware
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Socket.io setup for real-time updates
+// Create the HTTP server used by both Express and Socket.IO
 const server = http.createServer(app);
+
+// Initialize Socket.IO for real-time client communication
 const io = new SocketServer(server, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST']
-  }
+    methods: ['GET', 'POST'],
+  },
 });
 
-// Health check endpoint
+// Health check endpoint for monitoring and service availability
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
     message: 'Chrono Master Pro Backend is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
-// Socket.io connection handler
+// Handle Socket.IO client connections
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
+  // Handle client disconnection
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
   });
 });
 
-// Error handling middleware
+// Centralized error handler for unhandled application errors
 app.use((err: any, req: Request, res: Response) => {
   console.error('Error:', err);
+
   res.status(err.status || 500).json({
     error: err.message || 'Internal Server Error',
-    status: err.status || 500
+    status: err.status || 500,
   });
 });
 
-// 404 handler
+// Handle requests to undefined routes
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: 'Route not found',
-    path: req.path
+    path: req.path,
   });
 });
 
-// Start server
+// Start the application server
 server.listen(PORT, () => {
   console.log(`🚀 Chrono Master Pro Backend running on port ${PORT}`);
   console.log(`📡 Socket.io ready for real-time updates`);
 });
 
+// Export server instances for testing and external integrations
 export { app, io, server };
